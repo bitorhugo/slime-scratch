@@ -93,7 +93,7 @@
     (%bfs goal q network visited)))
 
 (defun shortest-path (start end network)
-  (bfs (lambda (node) (eql (:w node) end))
+  (bfs (lambda (node) (eql node end))
        start
        network))
 
