@@ -97,12 +97,44 @@
        start
        network))
 
-;; example program
-;;
-
-(let ((net (make-hash-table)))
+#+n(let ((net (make-hash-table)))
   (setf (gethash 'a net) '(b c)
 	(gethash 'b net) '(c)
 	(gethash 'c net) '(d)
 	(gethash 'd net) '(e a))
   (shortest-path 'b 'a net))
+
+;;
+;; Iterative version
+;;
+
+(defun reconstruct-path (parent start)
+  (if (eql start (cdar parent))
+      (list (caar parent) (cdar parent))
+      (cons (caar parent)
+	    (reconstruct (rest parent)
+			 start))))
+
+(defun bfs (goal start net)
+  (let ((queue (list start))
+	(visited (list start))
+	(parent (list)))
+    (do ((n (pop queue) (pop queue)))
+	((null  n))
+      (let ((value (funcall goal n visited parent)))
+	(if value
+	    (return-from bfs value)
+	    (let ((neighbors (remove-if (lambda (nei)
+					  (member nei visited))
+					(cdr (assoc n net)))))
+	      (dolist (neighbor neighbors)
+		(push (cons neighbor n) parent)
+		(push neighbor visited)
+		(push neighbor queue))))))))
+
+(defun shortest-path (start end net)
+  (bfs (lambda (node visited parent)
+	 (declare (ignore visited))
+	 (when (eql node end)
+	   (reconstruct-path parent start)))
+       start net))
