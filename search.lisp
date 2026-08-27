@@ -138,3 +138,24 @@
 	 (when (eql node end)
 	   (reconstruct-path parent start)))
        start net))
+
+;;
+;; DFS: Same idea but now we eagerly search each branch, using a LIFO
+;;
+
+(defun new-paths (path node net)
+  "Returns the next layer of NET to explore."
+  (let ((adjacent (cdr (assoc node net))))
+    (mapcar #'(lambda (n)
+		(cons n path))
+	    adjacent)))
+
+(defun dfs (goal stack net)
+  (when stack
+    (let* ((path (rac stack))
+	   (node (first path)))
+      (if (funcall goal node)
+	  (reverse path)
+	  (dfs goal
+	       (append (butlast stack) (new-paths path node net))
+	       net)))))
