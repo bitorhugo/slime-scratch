@@ -30,7 +30,10 @@
 	  (setf (gethash n table) (%factorial n))))))
 
 (defun odds (n)
+  "Probability of N persons to NOT share a birthday. "
   (let ((percentages (list)))
+    ;; choices = 365
+    ;; samples = n
     (dotimes (i n (reverse percentages))
       (push
        (float (/ (factorial 365)
