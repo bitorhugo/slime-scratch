@@ -4,42 +4,33 @@
 ;; a 50% chance of at least 2 people sharing a birthday
 ;;
 
-;; Order does not matter and
-;; w/o replacement
 
-;; P(A) = 1 - P(not A)
-;; P(not A) = n! / ((n - r)! * r!)
+(let ((cache (make-hash-table)))
+  
+  (defun clr-cache () (clrhash cache))
 
+  (defun memoized () (values cache))
 
+  (defun memoize (k v)
+    (setf (gethash k cache) v))
 
-(let ((table (make-hash-table)))
-  (defun reset-mem () (setf table (clrhash table)))
-
-  (defun get-table () table)
-
-  (defun %factorial (n &optional (acc 1))
-    (cond ((<= n 1)
-	   acc)
-	  (t
-	   (%factorial (1- n) (* n acc)))))
+  (defun %factorial (n)
+    (loop for i from 1 to n
+	  with res = 1
+	  do (setf res (* i res))
+	     (memoize i res)
+	  finally (return res)))
   
   (defun factorial (n)
-    (let ((val (gethash n table)))
-      (if val
-	  val
-	  (setf (gethash n table) (%factorial n))))))
+    (%factorial n)))
+
 
 (defun odds (n)
   "Probability of N persons to NOT share a birthday. "
-  (let ((percentages (list)))
-    ;; choices = 365
-    ;; samples = n
-    (dotimes (i n (reverse percentages))
-      (push
-       (float (/ (factorial 365)
-		 (* (factorial (- 365 (1+ i)))
-		    (expt 365 (1+ i)))))
-       percentages))))
+  (loop for i from 1 to n
+	collect (float (/ (factorial 365)
+			  (* (factorial (- 365 i))
+			     (expt 365 i))))))
 
 ;;; Plotting
 
