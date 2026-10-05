@@ -1,0 +1,11 @@
+(defun matrix-* (a b)
+  (loop with ax-dim = (array-dimension a 0)
+	with by-dim = (array-dimension b 1)
+	with m = (make-array (list ax-dim by-dim) :initial-element 0)
+	for i from 0 to (1- ax-dim)
+	do (loop for j from 0 to (1- by-dim)
+		 do (loop for k from 0 to ax-dim
+			  do (incf (aref m i j)
+				      (* (aref a i k)
+					 (aref b k j)))))
+	finally (return m)))
