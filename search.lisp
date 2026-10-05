@@ -152,10 +152,74 @@
 
 (defun dfs (goal stack net)
   (when stack
-    (let* ((path (rac stack))
+    (let* ((path rac stack)
 	   (node (first path)))
       (if (funcall goal node)
 	  (reverse path)
 	  (dfs goal
 	       (append (butlast stack) (new-paths path node net))
 	       net)))))
+
+
+;; Dijkstra (wip)
+
+(defun dijkstra (start net)
+  (let ((dist '((a 0)))
+	(visited (list))
+	(hops (list)))
+    (block iter
+      (do ()
+	  ((/= (length dist)
+	       (length visited)))
+	(let ((node (apply #'min (remove-if (lambda (node)
+					      (member node visited))
+					    dist :key #'car))))
+	  (when (minusp (cdr node))
+	    (return-from iter))
+	  (push node visited)
+	  (let ((neighbors (frontier node net)))
+	    (do ((neighbor (pop neighbors) (pop neighbors)))
+		((null neighbor))
+	      (when (not (member neighbor visited))
+		(let ((d (cadr (assoc node dist)))
+		      (additive-cost (+ (cadr (assoc neighbor
+						     (cdr (assoc node
+								 net))))
+					d))))
+		(when (> d additive-cost)
+		  dist(neighbor) = additive-cost
+		  prev (neighbor) = node)))))))))
+
+;; Programs
+;;
+
+(setf net '((:inches :centimeters)
+	    (:hours :minutes)
+	    (:meters :centimeters)
+	    (:centimeters :meters)))
+
+(defun evaluate (query facts)
+  (destructuring-bind (var from to) query
+    (let* ((path (shortest-path from to facts))
+	   (res (funcall (apply #'compose (conversions path)) var)))
+      `(,var ,from -> ,res ,to))))
+
+(defun conversions (path)
+  (loop for (from to) on path
+	while to
+	collect (getf (symbol-plist from) to)))
+
+(defun compose (&rest fns)
+  (lambda (x)
+    (reduce #'funcall fns
+	    :from-end t
+	    :initial-value x)))
+
+(defun conversion (from to how)
+  (setf (getf (symbol-plist from) to)
+	(lambda (x) (apply (first how) x (rest how))))
+  (values t))
+
+(defun make-conversions (&rest conversions)
+  (dolist (c conversions (values t))
+    (apply #'conversion c)))
